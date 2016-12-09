@@ -119,6 +119,7 @@ def Evaluate(inputs, target, W1, W2, b1, b2):
   return CE
 
 def DisplayErrorPlot(train_error, valid_error):
+  """Plot the error rate of training set and validation set against epoch."""
   plt.figure(1)
   plt.clf()
   plt.plot(range(len(train_error)), train_error, 'b', label='Train')

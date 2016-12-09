@@ -3,7 +3,7 @@ import sys
 import matplotlib.pyplot as plt
 plt.ion()
 
-def mogEM(x, K, iters, minVary=0):
+def mogEM(x, K, iters, minVary=0, kmeans=1):
   """
   Fits a Mixture of K Gaussians on x.
   Inputs:
@@ -27,9 +27,11 @@ def mogEM(x, K, iters, minVary=0):
   mn = np.mean(x, axis=1).reshape(-1, 1) #calculate the mean of the same row, reshape if to (length of the array, 1)
   vr = np.var(x, axis=1).reshape(-1, 1)
  
-  # Change the initializaiton with Kmeans here
-  #mu = mn + np.random.randn(N, K) * (np.sqrt(vr) / randConst) #initialize by random
-  mu = KMeans(x, K, 5) # initialize by ranning kmeans for 5 iterations
+  # Change the initializaiton with Kmeans
+  if(kmeans):
+    mu = KMeans(x, K, 5) # initialize by ranning kmeans for 5 iterations
+  else:
+    mu = mn + np.random.randn(N, K) * (np.sqrt(vr) / randConst) #initialize by random
   
   vary = vr * np.ones((1, K)) * 2
   vary = (vary >= minVary) * vary + (vary < minVary) * minVary
@@ -58,8 +60,8 @@ def mogEM(x, K, iters, minVary=0):
     logProb = np.log(Px) + mx
     logProbX[i] = np.sum(logProb)
 
+    # explore the convergence for different initiiations.
     # print 'Iter %d logProb %.5f' % (i, logProbX[i])
-
     # # Plot log prob of data
     # plt.figure(1);
     # plt.clf()
@@ -110,7 +112,8 @@ def plotImage(data):
   plt.draw()
   raw_input('Press Enter.')
 
-def q2():
+def train():
+  """Train MoG on 2' and 3's data separately. Show Mean and Variance as image."""
   iters = 10
   minVary = 0.01
   K = 2
@@ -120,24 +123,24 @@ def q2():
   p2,mu2,vary2,logProbX2 = mogEM(train2, K, iters, minVary)
   print(p2)
   raw_input('Press Enter to continue.')
-  #plotImage(mu2)
-  #plotImage(vary2)
+  plotImage(mu2)
+  plotImage(vary2)
 
   p3,mu3,vary3,logProbX3 = mogEM(train3, K, iters, minVary)
   print(p3)
   raw_input('Press Enter to continue.')
-  #plotImage(mu3)
-  #plotImage(vary3)
+  plotImage(mu3)
+  plotImage(vary3)
 
-def q3():
+def trainAll():
+  """Train a MoG model with 20 components on all 600 training vectors. Experiment with kmeans initialization."""
   iters = 20
   minVary = 0.01
   inputs_train, inputs_valid, inputs_test, target_train, target_valid, target_test = LoadData('digits.npz')
   # Train a MoG model with 20 components on all 600 training
   # vectors, with both original initialization and kmeans initialization.
   p,mu,vary,logProbX = mogEM(inputs_train, 20, iters, minVary)
-  # plotImage(mu)
-  # plotImage(vary)
+  p,mu,vary,logProbX = mogEM(inputs_train, 20, iters, minVary, 0)
 
   raw_input('Press Enter to continue.')
 
@@ -175,7 +178,12 @@ def calAvgErr(p2,mu2,vary2,x2,p3,mu3,vary3,x3):
   error3 = calculate1Percent(classifiedResult3)
   return (error2+error3)/2
 
-def q4():
+def classifyDigits():
+  """
+  Classify which class a new digit belongs to. d=1 represents 2. d=2 represents 3.
+  Train the model with components 2, 5, 15, 25.
+  Plot the classification error rate versus number of components on training, validation, and test set.
+  """
   iters = 10
   minVary = 0.01
   errorTrain = np.zeros(4)
@@ -196,7 +204,6 @@ def q4():
     
     # Train a MoG model with K components for digit 3
     p3,mu3,vary3,logProbX3 = mogEM(train3, K, iters, minVary)
-
     
     # Caculate the probability P(d=1|x) and P(d=2|x),
     # classify examples, and compute error rate
@@ -218,15 +225,8 @@ def q4():
   plt.draw()
   raw_input('Press Enter to continue.')
 
-def q5():
-  # Choose the best mixture of Gaussian classifier you have, compare this
-  # mixture of Gaussian classifier with the neural network you implemented in
-  # the last assignment.
-
-  # Train neural network classifier. The number of hidden units should be
-  # equal to the number of mixture components.
-
-  # Show the error rate comparison.
+def classErrorAvg():
+  """ Train models for 2's and 3's and get the error average. """
   K = 15;
   iters = 10
   minVary = 0.01
@@ -246,8 +246,8 @@ def q5():
   raw_input('Press Enter to continue.')
 
 if __name__ == '__main__':
-  #q2()
-  #q3()
-  #q4()
-  q5()
+  #train()
+  #trainAll()
+  #classifyDigits()
+  classErrorAvg()
 
